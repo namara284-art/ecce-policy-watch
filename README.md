@@ -10,6 +10,9 @@ philanthropies and experts.
 > public website to browse them, plus subscriber capture. Email digests (Phase 2)
 > and the community/events space (Phase 4) are stubbed and planned.
 
+> **Deploying?** See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for the full
+> Supabase + Resend + Vercel + GitHub Actions setup.
+
 ## Quick start
 
 ```bash
