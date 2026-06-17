@@ -1,0 +1,47 @@
+name: Send ECCE digests
+
+# Sends email digests after reports are generated. Daily at 06:00 UTC (after the
+# 05:00 generation run), weekly on Mondays, monthly on the 1st.
+# Secrets: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY,
+#          ECCE_FROM_EMAIL, NEXT_PUBLIC_SITE_URL.
+on:
+  schedule:
+    - cron: "0 6 * * *" # daily 06:00 UTC
+    - cron: "30 6 * * 1" # weekly, Mondays 06:30 UTC
+    - cron: "0 7 1 * *" # monthly, 1st 07:00 UTC
+  workflow_dispatch:
+    inputs:
+      cadence:
+        description: "Digest cadence"
+        required: true
+        default: "daily"
+        type: choice
+        options: [daily, weekly, monthly]
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      ECCE_FROM_EMAIL: ${{ secrets.ECCE_FROM_EMAIL }}
+      NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - name: Determine cadence
+        id: kind
+        run: |
+          case "${{ github.event.schedule }}" in
+            "30 6 * * 1") echo "cadence=weekly" >> "$GITHUB_OUTPUT" ;;
+            "0 7 1 * *")  echo "cadence=monthly" >> "$GITHUB_OUTPUT" ;;
+            *)            echo "cadence=${{ github.event.inputs.cadence || 'daily' }}" >> "$GITHUB_OUTPUT" ;;
+          esac
+      - name: Send digests
+        run: npm run digest:${{ steps.kind.outputs.cadence }}
