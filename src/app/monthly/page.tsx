@@ -18,7 +18,7 @@ export default async function MonthlyPage() {
 
       {reports.length === 0 ? (
         <p className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-slate-500">
-          No monthly reports yet. Generate one with <code>npm run agent:monthly</code>.
+          No monthly reports yet. Monthly syntheses are published at the start of each month.
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

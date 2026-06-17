@@ -1,17 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { activeRegions } from "@/lib/regions";
+import { useMemo, useState } from "react";
+import { regionsByContinent } from "@/lib/regions";
 
 type Status = "idle" | "loading" | "success" | "error";
 
 export function SubscribeForm() {
-  const regions = activeRegions();
+  const groups = useMemo(() => regionsByContinent(), []);
   const [email, setEmail] = useState("");
   const [selected, setSelected] = useState<string[]>(["global"]);
   const [cadence, setCadence] = useState("daily");
+  const [query, setQuery] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+
+  const filteredGroups = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return groups;
+    return groups
+      .map((g) => ({ ...g, regions: g.regions.filter((r) => r.name.toLowerCase().includes(q)) }))
+      .filter((g) => g.regions.length > 0);
+  }, [groups, query]);
 
   function toggleRegion(slug: string) {
     setSelected((prev) =>
@@ -67,25 +76,48 @@ export function SubscribeForm() {
       </div>
 
       <div>
-        <span className="block text-sm font-medium text-slate-700">Regions of interest</span>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {regions.map((r) => {
-            const on = selected.includes(r.slug);
-            return (
-              <button
-                type="button"
-                key={r.slug}
-                onClick={() => toggleRegion(r.slug)}
-                className={`rounded-full border px-3 py-1 text-sm ${
-                  on
-                    ? "border-brand-600 bg-brand-600 text-white"
-                    : "border-slate-300 bg-white text-slate-600 hover:border-brand-500"
-                }`}
-              >
-                {r.name}
-              </button>
-            );
-          })}
+        <div className="flex items-center justify-between">
+          <span className="block text-sm font-medium text-slate-700">Countries of interest</span>
+          <span className="text-xs text-slate-400">{selected.length} selected</span>
+        </div>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search countries…"
+          className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+        />
+        <div className="mt-2 max-h-56 space-y-3 overflow-y-auto rounded-md border border-slate-200 p-3">
+          {filteredGroups.length === 0 ? (
+            <p className="text-sm text-slate-400">No countries match &ldquo;{query}&rdquo;.</p>
+          ) : (
+            filteredGroups.map((g) => (
+              <div key={g.continent}>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  {g.continent}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {g.regions.map((r) => {
+                    const on = selected.includes(r.slug);
+                    return (
+                      <button
+                        type="button"
+                        key={r.slug}
+                        onClick={() => toggleRegion(r.slug)}
+                        className={`rounded-full border px-3 py-1 text-sm ${
+                          on
+                            ? "border-brand-600 bg-brand-600 text-white"
+                            : "border-slate-300 bg-white text-slate-600 hover:border-brand-500"
+                        }`}
+                      >
+                        {r.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

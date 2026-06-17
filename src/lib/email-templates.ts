@@ -18,7 +18,7 @@ function layout(title: string, inner: string, footer?: string): string {
       ${inner}
     </div>
     <p style="color:#94a3b8;font-size:12px;margin:16px 4px;">
-      Global ECCE Policy Watch — AI-assisted Early Childhood Care &amp; Education policy intelligence.
+      Global ECCE Policy Watch — Early Childhood Care &amp; Education policy intelligence.
       ${footer ?? ""}
     </p>
   </div>
