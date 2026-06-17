@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+}
+
+.prose-report h2 {
+  @apply mt-6 mb-2 text-xl font-semibold text-slate-900;
+}
+.prose-report h3 {
+  @apply mt-4 mb-2 text-lg font-semibold text-slate-900;
+}
+.prose-report p {
+  @apply mb-3 leading-relaxed text-slate-700;
+}
+.prose-report ul {
+  @apply mb-3 list-disc space-y-1 pl-6 text-slate-700;
+}
+.prose-report a {
+  @apply text-brand-600 underline;
+}
