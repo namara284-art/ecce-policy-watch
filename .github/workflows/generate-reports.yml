@@ -1,0 +1,43 @@
+name: Generate ECCE reports
+
+# Daily reports every morning; monthly synthesis on the 1st.
+# Configure repository secrets: ANTHROPIC_API_KEY, NEXT_PUBLIC_SUPABASE_URL,
+# SUPABASE_SERVICE_ROLE_KEY.
+on:
+  schedule:
+    - cron: "0 5 * * *" # 05:00 UTC daily
+    - cron: "0 6 1 * *" # 06:00 UTC on the 1st — monthly
+  workflow_dispatch:
+    inputs:
+      type:
+        description: "Report type"
+        required: true
+        default: "daily"
+        type: choice
+        options: [daily, monthly]
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - name: Determine report type
+        id: kind
+        run: |
+          if [ "${{ github.event.schedule }}" = "0 6 1 * *" ]; then
+            echo "type=monthly" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=${{ github.event.inputs.type || 'daily' }}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Generate reports
+        run: npm run agent:generate -- --type ${{ steps.kind.outputs.type }}
