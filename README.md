@@ -10,6 +10,9 @@ philanthropies and experts.
 > public website to browse them, plus subscriber capture. Email digests (Phase 2)
 > and the community/events space (Phase 4) are stubbed and planned.
 
+> **Deploying?** See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for the full
+> Supabase + Resend + Vercel + GitHub Actions setup.
+
 ## Quick start
 
 ```bash
@@ -79,9 +82,29 @@ npm run agent:generate -- --region kenya   # a single region
 
 Without Supabase configured the agent does a dry run and prints results.
 
+## Accounts & community (Phase 3 & 4)
+
+Sign-in uses **Supabase Auth** (passwordless magic links). Apply
+`supabase/migrations/0003_community.sql` to enable it. When Supabase isn't
+configured the community pages still render with demo content.
+
+- **Accounts:** `/login` emails a magic link; new users land on `/profile` to set
+  their role (practitioner / donor / philanthropy / expert), organisation and bio.
+- **Members:** `/members` directory of onboarded profiles.
+- **Community:** `/community` feed — post updates, activities and invitations,
+  optionally linking a report. Members can flag content for moderation.
+- **Events:** `/events` calendar — add events and RSVP.
+- Row-level security restricts writes to the owner; flagged content is reviewable
+  by admins (`profiles.is_admin`).
+
 ## Roadmap
 
 1. **Phase 1 (done):** multi-region reports + public website + subscriber capture.
-2. **Phase 2:** email engine — double opt-in confirmation + daily/weekly/monthly digests.
-3. **Phase 3:** user accounts with roles (practitioner, donor, philanthropy, expert).
-4. **Phase 4:** community — profiles, posts, sharing, invitations, events calendar, moderation.
+2. **Phase 2 (done):** email engine — double opt-in confirmation + daily/weekly/monthly digests.
+3. **Phase 3 (done):** user accounts with roles (practitioner, donor, philanthropy, expert).
+4. **Phase 4 (done):** community — profiles, posts, sharing, invitations, events calendar, moderation.
+
+### Possible next steps
+- Admin moderation dashboard (review flags, hide content) beyond the Supabase dashboard.
+- Event RSVPs visible to hosts; calendar export (iCal).
+- Per-member report bookmarks and email preferences in-app.

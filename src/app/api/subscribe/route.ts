@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { getServiceClient, isSupabaseConfigured } from "@/lib/supabase";
+import { sendEmail, siteUrl } from "@/lib/email";
+import { confirmationEmail } from "@/lib/email-templates";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VALID_CADENCE = new Set(["daily", "weekly", "monthly"]);
 
 /**
- * Phase 1 captures subscribers. Phase 2 will add the confirmation email
- * (double opt-in) and the digest sender. We persist with `confirmed: false`
- * now so the opt-in flow can flip it later.
+ * Double opt-in subscribe. New/unconfirmed subscribers get a confirmation
+ * email; already-confirmed subscribers simply have their preferences updated
+ * (re-subscribing never silently un-confirms them).
  */
 export async function POST(request: Request) {
   let body: { email?: string; regions?: string[]; cadence?: string };
@@ -32,28 +34,49 @@ export async function POST(request: Request) {
   }
 
   if (!isSupabaseConfigured()) {
-    // No DB configured (e.g. local dev): accept gracefully so the UI works.
     return NextResponse.json({
       message:
-        "Subscription received (demo mode — configure Supabase to persist and send confirmation emails).",
+        "Subscription received (demo mode — configure Supabase + Resend to persist and send confirmation emails).",
     });
   }
 
   try {
     const supabase = getServiceClient();
-    const { error } = await supabase
+
+    const { data: existing, error: readErr } = await supabase
       .from("subscribers")
-      .upsert(
-        { email, regions, cadence, confirmed: false },
-        { onConflict: "email" }
-      );
-    if (error) throw error;
+      .select("id, confirmed, confirm_token")
+      .eq("email", email)
+      .maybeSingle();
+    if (readErr) throw readErr;
+
+    // Already confirmed: just update preferences, no re-confirmation needed.
+    if (existing?.confirmed) {
+      const { error } = await supabase
+        .from("subscribers")
+        .update({ regions, cadence })
+        .eq("email", email);
+      if (error) throw error;
+      return NextResponse.json({ message: "Your subscription preferences have been updated." });
+    }
+
+    // New or unconfirmed: upsert and (re)send confirmation.
+    const { data: row, error: upsertErr } = await supabase
+      .from("subscribers")
+      .upsert({ email, regions, cadence, confirmed: false }, { onConflict: "email" })
+      .select("confirm_token")
+      .single();
+    if (upsertErr) throw upsertErr;
+
+    const confirmUrl = `${siteUrl()}/confirm?token=${row.confirm_token}`;
+    const { subject, html } = confirmationEmail(confirmUrl);
+    await sendEmail({ to: email, subject, html });
   } catch (err) {
     const detail = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: `Could not save subscription: ${detail}` }, { status: 500 });
   }
 
   return NextResponse.json({
-    message: "Subscription received. Check your inbox to confirm (coming in Phase 2).",
+    message: "Almost there — check your inbox and click the confirmation link.",
   });
 }

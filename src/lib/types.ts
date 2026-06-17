@@ -37,3 +37,58 @@ export interface Report {
   bodyMarkdown: string;
   createdAt: string;
 }
+
+// --- Community (Phase 3 & 4) ---
+
+export type MemberRole = "practitioner" | "donor" | "philanthropy" | "expert" | "other";
+
+export const ROLE_LABELS: Record<MemberRole, string> = {
+  practitioner: "Practitioner",
+  donor: "Donor",
+  philanthropy: "Philanthropy",
+  expert: "Expert / Researcher",
+  other: "Member",
+};
+
+export interface Profile {
+  id: string;
+  email: string | null;
+  fullName: string | null;
+  role: MemberRole;
+  organization: string | null;
+  country: string | null;
+  bio: string | null;
+  website: string | null;
+  onboarded: boolean;
+}
+
+export type PostKind = "update" | "activity" | "invitation";
+
+export const POST_KIND_LABELS: Record<PostKind, string> = {
+  update: "Update",
+  activity: "Activity",
+  invitation: "Invitation",
+};
+
+export interface Post {
+  id: string;
+  authorName: string;
+  authorRole: MemberRole;
+  authorOrg: string | null;
+  kind: PostKind;
+  title: string;
+  body: string;
+  reportId: string | null;
+  createdAt: string;
+}
+
+export interface EventItem {
+  id: string;
+  hostName: string;
+  title: string;
+  description: string;
+  startsAt: string;
+  location: string | null;
+  url: string | null;
+  rsvpCount: number;
+}
