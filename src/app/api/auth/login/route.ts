@@ -26,12 +26,29 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: `${siteUrl()}/auth/callback` },
-  });
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${siteUrl()}/auth/callback` },
+    });
+    if (error) {
+      // Surface a useful message — Supabase AuthError props aren't enumerable,
+      // so naive serialization yields "{}". Log the full error for Vercel logs.
+      console.error("signInWithOtp failed:", error);
+      const detail =
+        error.message?.trim() ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (error as any).code ||
+        error.name ||
+        `Sign-in failed (status ${error.status ?? "unknown"})`;
+      return NextResponse.json({ error: detail }, { status: error.status || 500 });
+    }
+  } catch (e) {
+    console.error("signInWithOtp threw:", e);
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Unexpected error sending the sign-in link." },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ message: "Check your inbox for a sign-in link." });

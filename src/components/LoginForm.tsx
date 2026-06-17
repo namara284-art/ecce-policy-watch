@@ -17,13 +17,23 @@ export function LoginForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not sign you in.");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg =
+          typeof data?.error === "string" && data.error.trim()
+            ? data.error
+            : "Could not sign you in. Please try again.";
+        throw new Error(msg);
+      }
       setStatus("sent");
-      setMessage(data.message);
+      setMessage(
+        typeof data?.message === "string" && data.message.trim()
+          ? data.message
+          : "Check your inbox for a sign-in link."
+      );
     } catch (err) {
       setStatus("error");
-      setMessage(err instanceof Error ? err.message : "Something went wrong.");
+      setMessage(err instanceof Error && err.message ? err.message : "Something went wrong.");
     }
   }
 
