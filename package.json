@@ -2,7 +2,7 @@
   "name": "ecce-policy-watch",
   "version": "0.1.0",
   "private": true,
-  "description": "Global ECCE Policy Watch — daily and monthly Early Childhood Care & Education policy intelligence reports, powered by a Claude agent.",
+  "description": "Global ECCE Policy Watch — daily and monthly Early Childhood Care & Education policy intelligence reports.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
